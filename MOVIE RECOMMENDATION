@@ -1,0 +1,34 @@
+import numpy as np
+from scipy.sparse import csr_matrix
+from scipy.sparse.linalg import svds
+
+class MovieRecommender:
+    def __init__(self, ratings_matrix, k=50):
+        self.ratings_matrix = ratings_matrix
+        self.k = k
+        self.U, self.sigma, self.Vt = svds(ratings_matrix, k=self.k)
+
+    def recommend_movies(self, user_id, n=5):
+        user_ratings = self.ratings_matrix[user_id, :]
+        pred_ratings = np.dot(np.dot(self.U[user_id, :], np.diag(self.sigma)), self.Vt)
+
+        # Exclude movies the user has already rated
+        pred_ratings[user_ratings.nonzero()] = -np.inf
+
+        # Get top recommended movie indices
+        top_movie_indices = pred_ratings.argsort()[::-1][:n]
+        return top_movie_indices
+
+# Example usage
+# Assume ratings_matrix is a user-item ratings matrix where rows represent users and columns represent movies
+ratings_matrix = np.array([[5, 4, 0, 0, 0],
+                            [0, 0, 5, 4, 0],
+                            [0, 0, 0, 0, 5],
+                            [0, 0, 0, 0, 4]])
+
+# Create a movie recommender
+recommender = MovieRecommender(ratings_matrix)
+
+# Recommend movies for user 0
+recommended_movies = recommender.recommend_movies(user_id=0, n=2)
+print("Recommended movies for user 0:", recommended_movies)
